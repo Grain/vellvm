@@ -27,7 +27,7 @@ Module RENAMING
   Module SS := StepSemantics A LLVMIO.
   Import SS.
   Import LLVMIO.
-  
+
 Class Swap (A:Type) := swap : raw_id -> raw_id -> A -> A.
 Definition swap_raw_id (id1 id2:raw_id) (id:raw_id) : raw_id :=
   if id == id1 then id2 else
@@ -63,7 +63,7 @@ Next Obligation.
 Qed.
 Next Obligation.
   unfold_swaps. unfold swap_raw_id. simpl_ifs; subst; auto.
-Qed.  
+Qed.
 
 Definition swap_ident (id1 id2:raw_id) (id:ident) : ident :=
   match id with
@@ -74,7 +74,7 @@ Instance swap_of_ident : Swap ident := swap_ident.
 Program Instance ident_swaplaws : SwapLaws ident.
 Next Obligation.
   unfold_swaps; unfold swap_of_ident; destruct x; simpl; rewrite swap_same_id; reflexivity.
-Qed.  
+Qed.
 
 Instance swap_of_pair {A B} `(SA:Swap A) `(SB:Swap B) : Swap (A * B)%type :=
   fun id1 id2 p => (swap id1 id2 (fst p), swap id1 id2 (snd p)).
@@ -87,7 +87,7 @@ Qed.
 Next Obligation.
   unfold swap. unfold swap_of_pair.
   rewrite swap_same_id. rewrite swap_same_id. reflexivity.
-Qed.  
+Qed.
 Next Obligation.
   unfold swap. unfold swap_of_pair. simpl.
   rewrite swap_comm. rewrite (@swap_comm B) at 1. reflexivity. assumption.
@@ -104,7 +104,7 @@ Hint Unfold swap_of_list.
 
 Instance swap_of_err {A} `(SA:Swap A) : Swap (err A) :=
   fun id1 id2 e =>
-    match e with 
+    match e with
     | inl s => inl s
     | inr a => inr (swap id1 id2 a)
     end.
@@ -172,7 +172,7 @@ Fixpoint swap_exp (id1 id2:raw_id) (e:exp) : exp :=
   | EXP_Struct fields =>
     EXP_Struct (List.map (fun '(t,e) => (swap id1 id2 t, swap_exp id1 id2 e)) fields)
   | EXP_Packed_struct fields =>
-    EXP_Packed_struct (List.map (fun '(t,e) => (swap id1 id2 t, swap_exp id1 id2 e)) fields)    
+    EXP_Packed_struct (List.map (fun '(t,e) => (swap id1 id2 t, swap_exp id1 id2 e)) fields)
   | EXP_Array elts =>
     EXP_Array (List.map (fun '(t,e) => (swap id1 id2 t, swap_exp id1 id2 e)) elts)
   | EXP_Vector elts =>
@@ -182,9 +182,9 @@ Fixpoint swap_exp (id1 id2:raw_id) (e:exp) : exp :=
   | OP_ICmp cmp t v1 v2 =>
     OP_ICmp (swap id1 id2 cmp) (swap id1 id2 t) (swap_exp id1 id2 v1) (swap_exp id1 id2 v2)
   | OP_FBinop fop fm t v1 v2 =>
-    OP_FBinop (swap id1 id2 fop) fm (swap id1 id2 t) (swap_exp id1 id2 v1) (swap_exp id1 id2 v2)    
+    OP_FBinop (swap id1 id2 fop) fm (swap id1 id2 t) (swap_exp id1 id2 v1) (swap_exp id1 id2 v2)
   | OP_FCmp cmp t v1 v2 =>
-    OP_FCmp (swap id1 id2 cmp) (swap id1 id2 t) (swap_exp id1 id2 v1) (swap_exp id1 id2 v2)    
+    OP_FCmp (swap id1 id2 cmp) (swap id1 id2 t) (swap_exp id1 id2 v1) (swap_exp id1 id2 v2)
   | OP_Conversion conv t_from v t_to =>
     OP_Conversion conv (swap id1 id2 t_from) (swap_exp id1 id2 v) (swap id1 id2 t_to)
   | OP_GetElementPtr t ptrval idxs =>
@@ -195,11 +195,11 @@ Fixpoint swap_exp (id1 id2:raw_id) (e:exp) : exp :=
                       (swap id1 id2 (fst idx), swap_exp id1 id2 (snd idx))
   | OP_InsertElement  vec elt idx =>
     OP_InsertElement (swap id1 id2 (fst vec), swap_exp id1 id2 (snd vec))
-                     (swap id1 id2 (fst elt), swap_exp id1 id2 (snd elt))                     
+                     (swap id1 id2 (fst elt), swap_exp id1 id2 (snd elt))
                      (swap id1 id2 (fst idx), swap_exp id1 id2 (snd idx))
   | OP_ShuffleVector vec1 vec2 idxmask =>
     OP_ShuffleVector (swap id1 id2 (fst vec1), swap_exp id1 id2 (snd vec1))
-                     (swap id1 id2 (fst vec2), swap_exp id1 id2 (snd vec2))                     
+                     (swap id1 id2 (fst vec2), swap_exp id1 id2 (snd vec2))
                      (swap id1 id2 (fst idxmask), swap_exp id1 id2 (snd idxmask))
   | OP_ExtractValue  vec idxs =>
     OP_ExtractValue  (swap id1 id2 (fst vec), swap_exp id1 id2 (snd vec))
@@ -291,9 +291,9 @@ Instance swap_of_thread_local_storage : Swap thread_local_storage :=
 Hint Unfold swap_of_param_attr swap_of_fn_attr swap_of_cconv swap_of_linkage swap_of_visibility swap_of_dll_storage swap_of_thread_local_storage.
 
 Definition swap_global (id1 id2:raw_id) (g:global) : global :=
-  mk_global 
+  mk_global
       (swap id1 id2 (g_ident g))
-      (swap id1 id2 (g_typ g))     
+      (swap id1 id2 (g_typ g))
       (swap id1 id2 (g_constant g))
       (swap id1 id2 (g_exp g))
       (swap id1 id2 (g_linkage g))
@@ -323,7 +323,7 @@ Definition swap_declaration (id1 id2:raw_id) (d:declaration) : declaration :=
     (swap id1 id2 (dc_align d))
     (swap id1 id2 (dc_gc d)).
 Hint Unfold swap_declaration.
-Instance swap_of_declaration : Swap declaration := swap_declaration.    
+Instance swap_of_declaration : Swap declaration := swap_declaration.
 Hint Unfold swap_of_declaration.
 
 Definition swap_block (id1 id2:raw_id) (b:block) : block :=
@@ -331,7 +331,7 @@ Definition swap_block (id1 id2:raw_id) (b:block) : block :=
            (swap id1 id2 (blk_phis b))
            (swap id1 id2 (blk_code b))
            (swap id1 id2 (blk_term b)).
-Hint Unfold swap_block.  
+Hint Unfold swap_block.
 Instance swap_of_block : Swap block := swap_block.
 Hint Unfold swap_of_block.
 
@@ -402,7 +402,7 @@ Definition swap_cmd (id1 id2:raw_id) (c:cmd) : cmd :=
   match c with
   | Inst i => Inst (swap id1 id2 i)
   | Term t => Term (swap id1 id2 t)
-  end.                    
+  end.
 Instance swap_of_cmd : Swap cmd := swap_cmd.
 Hint Unfold swap_of_cmd.
 
@@ -440,10 +440,10 @@ Fixpoint swap_dvalue (id1 id2:raw_id) (dv:dvalue) : dvalue :=
   | DVALUE_Undef t v => DVALUE_Undef (swap id1 id2 t) (swap id1 id2 v)
   | DVALUE_Poison => DVALUE_Poison
   | DVALUE_None => DVALUE_None
-  | DVALUE_Struct fields => DVALUE_Struct (List.map (fun '(t,e) => (swap id1 id2 t, swap_dvalue id1 id2 e)) fields)    
-  | DVALUE_Packed_struct fields => DVALUE_Packed_struct (List.map (fun '(t,e) => (swap id1 id2 t, swap_dvalue id1 id2 e)) fields)    
-  | DVALUE_Array elts => DVALUE_Array (List.map (fun '(t,e) => (swap id1 id2 t, swap_dvalue id1 id2 e)) elts)    
-  | DVALUE_Vector elts => DVALUE_Vector (List.map (fun '(t,e) => (swap id1 id2 t, swap_dvalue id1 id2 e)) elts)    
+  | DVALUE_Struct fields => DVALUE_Struct (List.map (fun '(t,e) => (swap id1 id2 t, swap_dvalue id1 id2 e)) fields)
+  | DVALUE_Packed_struct fields => DVALUE_Packed_struct (List.map (fun '(t,e) => (swap id1 id2 t, swap_dvalue id1 id2 e)) fields)
+  | DVALUE_Array elts => DVALUE_Array (List.map (fun '(t,e) => (swap id1 id2 t, swap_dvalue id1 id2 e)) elts)
+  | DVALUE_Vector elts => DVALUE_Vector (List.map (fun '(t,e) => (swap id1 id2 t, swap_dvalue id1 id2 e)) elts)
   end.
 *)
 
@@ -484,7 +484,7 @@ Definition swap_result (id1 id2:raw_id) (r:result) : result :=
   match r with
   | Done v => Done (swap id1 id2 v)
   | Step s => Step (swap id1 id2 s)
-  end.       
+  end.
 
 Instance swap_of_result : Swap result := swap_result.
 Hint Unfold swap_of_result.
@@ -516,26 +516,26 @@ Section PROOFS.
   Qed.
 
   Variable id1 id2 : raw_id.
-  
+
   Lemma swap_raw_id_inj : forall (k j:raw_id), swap id1 id2 k = swap id1 id2 j -> k = j.
   Proof.
     intros.
     unfold_swaps. unfold swap_raw_id in *.
     simpl_ifs; subst; try reflexivity; try contradiction.
   Qed.
-  
+
   Lemma swap_ENV_find : forall {X} `{SX : Swap X} (e:ENV.t X) (id:raw_id),
       (ENV.find (swap id1 id2 id) (swap id1 id2 e)) = swap id1 id2 (ENV.find id e).
   Proof.
-    intros X SX. 
+    intros X SX.
     unfold_swaps.
     intros e id.
     apply ENVProps.fold_rec.
     - intros m H.
-      rewrite find_Empty_none. rewrite find_Empty_none. reflexivity. assumption. 
+      rewrite find_Empty_none. rewrite find_Empty_none. reflexivity. assumption.
       apply ENV.empty_1.
 
-    - intros k e0 a m' m'' H H0 H1 H2. 
+    - intros k e0 a m' m'' H H0 H1 H2.
       rewrite H1.
       repeat rewrite ENVFacts.add_o.
       destruct (ENVProps.F.eq_dec k id).
@@ -549,7 +549,7 @@ Section PROOFS.
       apply swap_raw_id_inj in e1. contradiction.
       apply H2.
   Qed.
-  
+
   Lemma swap_lookup_env : forall {X} `{SX : Swap X} (e:ENV.t X) (id:raw_id),
       lookup_env (swap id1 id2 e) (swap id1 id2 id) ≡ swap id1 id2 (lookup_env e id).
   Proof.
@@ -566,7 +566,7 @@ Section PROOFS.
     unfold lookup_id.
     destruct i; simpl; apply swap_lookup_env.
   Qed.
-  
+
   Lemma swap_eval_i1_op : forall (iop:ibinop) (x y:inttyp 1),
       eval_int_op (swap id1 id2 iop) (swap id1 id2 x) (swap id1 id2 y) = swap id1 id2 (eval_int_op iop x y).
   Proof.
@@ -587,7 +587,7 @@ Section PROOFS.
       eval_int_op (swap id1 id2 iop) (swap id1 id2 x) (swap id1 id2 y) = swap id1 id2 (eval_int_op iop x y).
   Proof.
     unfold_swaps.
-    intros iop x y. 
+    intros iop x y.
     reflexivity.
   Qed.
 
@@ -618,58 +618,86 @@ Section PROOFS.
     destruct (eval_icmp icmp v1 v2); reflexivity.
   Qed.
 
-  
-  Lemma swap_raise {X} `{SX: Swap X} : forall s : string, (raise s : Trace X) = swap id1 id2 (raise s).
+(* TODO: we can prove =, can we do some hint stuff to make the proof easier? *)
+  Lemma swap_raise {X} `{SX: Swap X} : forall s : string, (raise s : Trace X) ≡ swap id1 id2 (raise s).
   Proof.
     intros s.
-    unfold_swaps.
-    rewrite ITree.match_itree.
-    simpl.
-    unfold_swaps.
-    reflexivity.
-  Qed.    
+    rewrite ITree.match_itree. simpl. reflexivity.
+  Qed.
 
-
-  Lemma swap_ret {X} `{SX: Swap X} : forall x, ITree.Ret (inr (swap id1 id2 x)) = swap id1 id2 (ITree.Ret (inr x)).
+  Lemma swap_ret {X} `{SX: Swap X} : forall x, ITree.Ret (inr (swap id1 id2 x)) ≡ swap id1 id2 (ITree.Ret (inr x)).
   Proof.
     intro x.
     rewrite ITree.match_itree. simpl. reflexivity.
   Qed.
   Hint Resolve swap_ret.
 
+  (* Lemma swap_ret' {X} `{SX: Swap X} : forall x, ITree.Ret (inl (swap id1 id2 x)) ≡ swap id1 id2 (ITree.Ret (inl x)). *)
+  (* Proof. *)
+  (*   intro x. *)
+  (*   rewrite ITree.match_itree. simpl. reflexivity. *)
+  (* Qed. *)
+  (* Hint Resolve swap_ret'. *)
+
   Lemma swap_eval_exp : forall CFG g e top o,
-      eval_exp (swap id1 id2 CFG) (swap id1 id2 g) (swap id1 id2 e) (swap id1 id2 top) (swap id1 id2 o) =
+      eval_exp (swap id1 id2 CFG) (swap id1 id2 g) (swap id1 id2 e) (swap id1 id2 top) (swap id1 id2 o) ≡
       swap id1 id2 (eval_exp CFG g e top o).
   Proof.
     intros CFG g e top.
     induction o; simpl.
     - rewrite swap_lookup_id.
-      destruct (lookup_id g e id); simpl; auto.
-      apply swap_raise. (** The extension of the Exception monad broke the automation, to fix **)
-      apply swap_ret.
-    - destruct top. destruct d; simpl; unfold failwith; auto; try now apply swap_raise.
-      symmetry. rewrite ITree.match_itree. simpl.
-(* 
-      destruct (coerce_integer_to_int sz x); try reflexivity. 
-      simpl. unfold failwith. apply swap_raise.
-    - destruct top. destruct d; simpl; unfold failwith; auto; try now apply swap_raise.
-      
-*)
-(* Change to the ITree affected the way that errors need to be handled here. *)      
-    
+      destruct (lookup_id g e id); simpl.
+      + apply swap_raise.
+      + apply swap_ret.
+    - destruct top; simpl.
+      + destruct d; auto; try apply swap_raise. simpl.
+        rewrite ITree.match_itree at 2.
+        destruct (coerce_integer_to_int sz x); simpl.
+        apply swap_raise. simpl. unfold Trace. rewrite <- swap_ret. reflexivity.
+      + apply swap_raise.
+    - destruct top.
+      + destruct d; simpl; auto; try apply swap_raise; unfold Trace; rewrite <- swap_ret; reflexivity.
+      + apply swap_raise.
+    - destruct top.
+      + destruct d; simpl; auto; try apply swap_raise; unfold Trace; rewrite <- swap_ret; reflexivity.
+      + apply swap_raise.
+    - destruct b; simpl; unfold Trace; rewrite <- swap_ret; reflexivity.
+    - unfold Trace; rewrite <- swap_ret; reflexivity.
+    - destruct top; apply swap_raise.
+    - apply swap_raise.
+    - destruct top.
+      + destruct d; unfold Trace; rewrite <- swap_ret; reflexivity.
+      + apply swap_raise.
+    - clear top. induction fields.
+      + simpl.
+        rewrite ITree.match_itree.
+        rewrite (ITree.match_itree (ITree.Core.bind (ITree.Ret (inr []))
+                                                    (fun m : string + list dvalue =>
+                                                       match m with
+                                                       | inl s => ITree.Ret (inl s)
+                                                       | inr x => ITree.Ret (inr (DVALUE_Struct x))
+                                                       end))).
+        reflexivity.
+      + simpl. admit.
+    - destruct top; simpl.
+      + destruct d; unfold Trace; simpl; try solve [apply swap_raise].
+        rewrite ITree.match_itree; simpl.
+
+
   Admitted.
 
-  
-  
+
+
   Lemma swap_step : forall (CFG:mcfg) (s:state),
       (step (swap id1 id2 CFG) (swap id1 id2 s)) ≡ (swap id1 id2 (step CFG s)).
   Proof.
     intros CFG.
     destruct s as [[[g pc] e] k].
     unfold_swaps. simpl.
+    destruct (fetch CFG pc). simpl.
   Admitted.
-    
-  
+
+
   Lemma swap_step_sem : forall (CFG:mcfg) (r:result),
       (step_sem (swap id1 id2 CFG) (swap id1 id2 r)) ≡ (swap id1 id2 (step_sem CFG r)).
   Proof.
@@ -682,12 +710,12 @@ Section PROOFS.
       rewrite Trace.matchM at 1. reflexivity.
       rewrite H. simpl. constructor.
 
-      
+
     - unfold swap at 2. simpl.
       rewrite Trace.matchM. simpl.
     *)
-    
-  Admitted.    
-    
-End PROOFS.  
+
+  Admitted.
+
+End PROOFS.
 End RENAMING.
