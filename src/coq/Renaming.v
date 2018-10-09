@@ -632,12 +632,14 @@ Section PROOFS.
   Qed.
   Hint Resolve swap_ret.
 
-  (* Lemma swap_ret' {X} `{SX: Swap X} : forall x, ITree.Ret (inl (swap id1 id2 x)) ≡ swap id1 id2 (ITree.Ret (inl x)). *)
+  (* Lemma swap_eval_typ : forall CFG t, *)
+  (*     eval_typ (swap id1 id2 CFG) (swap id1 id2 t) ≡ swap id1 id2 (eval_typ CFG t). *)
   (* Proof. *)
-  (*   intro x. *)
-  (*   rewrite ITree.match_itree. simpl. reflexivity. *)
-  (* Qed. *)
-  (* Hint Resolve swap_ret'. *)
+  (*   intros. unfold eval_typ. unfold TypeUtil.normalize_type_dtyp. *)
+  (*   (* unfold TypeUtil.normalize_type_dtyp_func. *) simpl. induction t. *)
+  (*   - unfold_swaps. simpl in *. unfold swap_of_dtyp. unfold swap_of_ident. *)
+  (*     unfold swap_typ. *)
+  (*     unfold swap_ident. *)
 
   Lemma swap_eval_exp : forall CFG g e top o,
       eval_exp (swap id1 id2 CFG) (swap id1 id2 g) (swap id1 id2 e) (swap id1 id2 top) (swap id1 id2 o) ≡
@@ -668,17 +670,30 @@ Section PROOFS.
     - destruct top.
       + destruct d; unfold Trace; rewrite <- swap_ret; reflexivity.
       + apply swap_raise.
-    - clear top. induction fields.
-      + simpl.
-        rewrite ITree.match_itree.
-        rewrite (ITree.match_itree (ITree.Core.bind (ITree.Ret (inr []))
-                                                    (fun m : string + list dvalue =>
-                                                       match m with
-                                                       | inl s => ITree.Ret (inl s)
-                                                       | inr x => ITree.Ret (inr (DVALUE_Struct x))
-                                                       end))).
-        reflexivity.
-      + simpl. admit.
+    -
+      (* let eval_texp '(t,ex) := *)
+      (*     let dt := eval_typ t in *)
+      (*     'v <- eval_exp (Some dt) ex; mret v *)
+      (* in *)
+
+      (*   | EXP_Struct es => *)
+      (*   'vs <- map_monad eval_texp es; *)
+      (*   mret (DVALUE_Struct vs) *)
+      clear top.
+      unfold_swaps. unfold swap_typ, swap_exp, swap_Trace. simpl in *.
+      (* induction fields. *)
+      (* + simpl. *)
+      (*   rewrite ITree.match_itree. *)
+      (*   rewrite (ITree.match_itree (ITree.Core.bind (ITree.Ret (inr [])) *)
+      (*                                               (fun m : string + list dvalue => *)
+      (*                                                  match m with *)
+      (*                                                  | inl s => ITree.Ret (inl s) *)
+      (*                                                  | inr x => ITree.Ret (inr (DVALUE_Struct x)) *)
+      (*                                                  end))). *)
+      (*   reflexivity. *)
+      (* + simpl. unfold_swaps. destruct fields. *)
+      (*   * simpl in *. *)
+      (*     rewrite <- IHfields. admit. *)
     - destruct top; simpl.
       + destruct d; unfold Trace; simpl; try solve [apply swap_raise].
         rewrite ITree.match_itree; simpl.
