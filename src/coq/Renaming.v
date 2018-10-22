@@ -679,25 +679,18 @@ Section PROOFS.
       (*   | EXP_Struct es => *)
       (*   'vs <- map_monad eval_texp es; *)
       (*   mret (DVALUE_Struct vs) *)
+
       clear top.
-      unfold_swaps. unfold swap_typ, swap_exp, swap_Trace. simpl in *.
-      (* induction fields. *)
-      (* + simpl. *)
-      (*   rewrite ITree.match_itree. *)
-      (*   rewrite (ITree.match_itree (ITree.Core.bind (ITree.Ret (inr [])) *)
-      (*                                               (fun m : string + list dvalue => *)
-      (*                                                  match m with *)
-      (*                                                  | inl s => ITree.Ret (inl s) *)
-      (*                                                  | inr x => ITree.Ret (inr (DVALUE_Struct x)) *)
-      (*                                                  end))). *)
-      (*   reflexivity. *)
-      (* + simpl. unfold_swaps. destruct fields. *)
-      (*   * simpl in *. *)
-      (*     rewrite <- IHfields. admit. *)
+      induction fields; simpl; auto.
+      + rewrite ITree.Equivalence.bind_def_core. unfold_swaps.
+        rewrite ITree.match_itree. reflexivity.
+      + rewrite ITree.Equivalence.bind_def_core. rewrite ITree.match_itree. simpl.
+        (* apply IH *)
+
+      (* unfold_swaps. unfold swap_typ, swap_exp, swap_Trace. simpl in *. *)
     - destruct top; simpl.
       + destruct d; unfold Trace; simpl; try solve [apply swap_raise].
         rewrite ITree.match_itree; simpl.
-
 
   Admitted.
 

@@ -35,24 +35,24 @@ Open Scope Z_scope.
 Open Scope string_scope.
 
 Module StepSemantics(A:MemoryAddress.ADDRESS)(LLVMIO:LLVM_INTERACTIONS(A)).
-  
+
   Import LLVMIO.
-  
+
   (* Environments ------------------------------------------------------------- *)
   Module ENV := FMapAVL.Make(AstLib.RawIDOrd).
   Module ENVFacts := FMapFacts.WFacts_fun(AstLib.RawIDOrd)(ENV).
   Module ENVProps := FMapFacts.WProperties_fun(AstLib.RawIDOrd)(ENV).
-  
+
   Definition env_of_assoc {A} (l:list (raw_id * A)) : ENV.t A :=
     List.fold_left (fun e '(k,v) => ENV.add k v e) l (@ENV.empty A).
-  
+
   Definition genv := ENV.t dvalue.
   Definition env  := ENV.t dvalue.
 
   Inductive frame : Type :=
   | KRet      (e:env) (id:local_id) (q:pc)
   | KRet_void (e:env) (p:pc)
-  .       
+  .
   Definition stack := list frame.
 
   Definition state := (genv * pc * env * stack)%type.
@@ -65,7 +65,7 @@ Module StepSemantics(A:MemoryAddress.ADDRESS)(LLVMIO:LLVM_INTERACTIONS(A)).
 
   Definition stack_of (s:state) :=
     let '(g, p, e, k) := s in k.
-  
+
   Fixpoint string_of_env' (e:list (raw_id * dvalue)) : string :=
     match e with
     | [] => ""
@@ -73,7 +73,7 @@ Module StepSemantics(A:MemoryAddress.ADDRESS)(LLVMIO:LLVM_INTERACTIONS(A)).
     end.
 
   Instance string_of_env : StringOf env := fun env => string_of_env' (ENV.elements env).
-  
+
   Definition lookup_env {X} (e:ENV.t X) (id:raw_id) : err X :=
     match ENV.find id e with
     | Some v => mret v
@@ -97,13 +97,13 @@ Module StepSemantics(A:MemoryAddress.ADDRESS)(LLVMIO:LLVM_INTERACTIONS(A)).
     | None => failwith "reverse_lookup_function_id failed"
     | Some (fid, _) => mret fid
     end.
-  
+
   Definition add_env := ENV.add.
 
-  
+
   Section CONVERSIONS.
-  (* Conversions can't go into DynamicValues because Int2Ptr and Ptr2Int casts 
-     generate memory effects. *) 
+  (* Conversions can't go into DynamicValues because Int2Ptr and Ptr2Int casts
+     generate memory effects. *)
   Definition eval_conv_h conv t1 x t2 : Trace dvalue :=
     match conv with
     | Trunc =>
@@ -159,7 +159,7 @@ Module StepSemantics(A:MemoryAddress.ADDRESS)(LLVMIO:LLVM_INTERACTIONS(A)).
       | TYPE_I bits1, x, TYPE_I bits2 =>
         if bits1 =? bits2 then mret x else failwith "unequal bitsize in cast"
       | TYPE_Pointer t1, DVALUE_Addr a, TYPE_Pointer t2 =>
-        mret (DVALUE_Addr a) 
+        mret (DVALUE_Addr a)
       | _, _, _ => failwith "ill-typed_conv"
       end
     | Fptrunc
@@ -172,7 +172,7 @@ Module StepSemantics(A:MemoryAddress.ADDRESS)(LLVMIO:LLVM_INTERACTIONS(A)).
       match t1, t2 with
       | TYPE_I 64, TYPE_Pointer t => Vis (ItoP x) mret
       | _, _ => raise "ERROR: Inttoptr got illegal arguments"
-      end 
+      end
     | Ptrtoint =>
       match t1, t2 with
       | TYPE_Pointer t, TYPE_I 64 => Vis (PtoI x) mret
@@ -181,7 +181,7 @@ Module StepSemantics(A:MemoryAddress.ADDRESS)(LLVMIO:LLVM_INTERACTIONS(A)).
     end.
   Arguments eval_conv_h _ _ _ _ : simpl nomatch.
 
-  
+
   Definition eval_conv conv t1 x t2 : Trace dvalue :=
     match t1, x with
     | TYPE_I bits, dv =>
@@ -213,9 +213,9 @@ Variable e : env.
 (*
   [eval_exp] is the main entry point for evaluating LLVM expressions.
   top : is the type at which the expression should be evaluated (if any)
-  INVARIANT: 
-    - top may be None only for 
-        - EXP_Ident 
+  INVARIANT:
+    - top may be None only for
+        - EXP_Ident
         - OP_* cases
 
     - top must be Some t for the remaining EXP_* cases
@@ -295,7 +295,7 @@ Fixpoint eval_exp (top:option dtyp) (o:exp) {struct o} : Trace dvalue :=
   | EXP_Array es =>
     'vs <- map_monad eval_texp es;
       mret (DVALUE_Array vs)
-    
+
   | EXP_Vector es =>
     'vs <- map_monad eval_texp es;
       mret (DVALUE_Vector vs)
@@ -309,13 +309,13 @@ Fixpoint eval_exp (top:option dtyp) (o:exp) {struct o} : Trace dvalue :=
 
   | OP_ICmp cmp t op1 op2 =>
     let dt := eval_typ t in
-    'v1 <- eval_exp (Some dt) op1;                   
+    'v1 <- eval_exp (Some dt) op1;
     'v2 <- eval_exp (Some dt) op2;
     do w <- (eval_icmp cmp) v1 v2;
     mret w
 
   | OP_FBinop fop fm t op1 op2 =>
-    let dt := eval_typ t in    
+    let dt := eval_typ t in
     'v1 <- eval_exp (Some dt) op1;
     'v2 <- eval_exp (Some dt) op2;
     do w <- eval_fop fop v1 v2;
@@ -327,12 +327,12 @@ Fixpoint eval_exp (top:option dtyp) (o:exp) {struct o} : Trace dvalue :=
     'v2 <- eval_exp (Some dt) op2;
     do w <- eval_fcmp fcmp v1 v2;
     mret w
-              
+
   | OP_Conversion conv t1 op t2 =>
     let dt1 := eval_typ t1 in
     'v <- eval_exp (Some dt1) op;
     eval_conv conv t1 v t2
-                       
+
   | OP_GetElementPtr _ (TYPE_Pointer t, ptrval) idxs =>
     let dt := eval_typ t in
     'vptr <- eval_exp (Some DTYPE_Pointer) ptrval;
@@ -341,21 +341,21 @@ Fixpoint eval_exp (top:option dtyp) (o:exp) {struct o} : Trace dvalue :=
 
   | OP_GetElementPtr _ (_, _) _ =>
     failwith "getelementptr has non-pointer type annotation"
-    
+
   | OP_ExtractElement vecop idx =>
     (*    'vec <- monad_app_snd (eval_exp e) vecop;
     'vidx <- monad_app_snd (eval_exp e) idx;  *)
-    failwith "extractelement not implemented" (* TODO: Extract Element *) 
-      
+    failwith "extractelement not implemented" (* TODO: Extract Element *)
+
   | OP_InsertElement vecop eltop idx =>
 (*    'vec <- monad_app_snd (eval_exp e) vecop;
     'v <- monad_app_snd (eval_exp e) eltop;
     'vidx <- monad_app_snd (eval_exp e) idx; *)
     failwith "insertelement not implemented" (* TODO *)
-    
+
   | OP_ShuffleVector vecop1 vecop2 idxmask =>
 (*    'vec1 <- monad_app_snd (eval_exp e) vecop1;
-    'vec2 <- monad_app_snd (eval_exp e) vecop2;      
+    'vec2 <- monad_app_snd (eval_exp e) vecop2;
     'vidx <- monad_app_snd (eval_exp e) idxmask; *)
     failwith "shufflevector not implemented" (* TODO *)
 
@@ -372,7 +372,7 @@ Fixpoint eval_exp (top:option dtyp) (o:exp) {struct o} : Trace dvalue :=
         end in
     do w <- loop str idxs;
       mret w
-        
+
   | OP_InsertValue strop eltop idxs =>
     (*
     '(t1, str) <- monad_app_snd (eval_exp e) strop;
@@ -389,7 +389,7 @@ Fixpoint eval_exp (top:option dtyp) (o:exp) {struct o} : Trace dvalue :=
         end in
     loop str idxs*)
     failwith "TODO"
-    
+
   | OP_Select (t, cnd) (t1, op1) (t2, op2) =>
     let dt := eval_typ t in
     let dt1 := eval_typ t1 in
@@ -412,13 +412,13 @@ End IN_LOCAL_ENVIRONMENT.
 Inductive result :=
 | Done (v:dvalue)
 | Step (s:state)
-.       
+.
 
 Definition raise_p {X} (p:pc) s : Trace X := raise (s ++ ": " ++ (string_of p)).
 Definition cont (s:state)  : Trace result := mret (Step s).
 Definition halt (v:dvalue) : Trace result := mret (Done v).
 
-  
+
 Definition jump (fid:function_id) (bid_src:block_id) (bid_tgt:block_id) (g:genv) (e_init:env) (k:stack) : Trace result :=
   let eval_phi (e:env) '(iid, Phi t ls) :=
       match assoc RawIDOrd.eq_dec bid_src ls with
@@ -439,27 +439,27 @@ Definition jump (fid:function_id) (bid_src:block_id) (bid_tgt:block_id) (g:genv)
 Definition step (s:state) : Trace result :=
   let '(g, pc, e, k) := s in
   let eval_exp top exp := eval_exp g e top exp in
-  
+
   do cmd <- trywith ("CFG has no instruction at " ++ string_of pc) (fetch CFG pc);
   match cmd with
   | Term (TERM_Ret (t, op)) =>
     'dv <- eval_exp (Some (eval_typ t)) op;
       match k with
-      | [] => halt dv       
+      | [] => halt dv
       | (KRet e' id p') :: k' => cont (g, p', add_env id dv e', k')
-      | _ => raise_p pc "IMPOSSIBLE: Ret op in non-return configuration" 
+      | _ => raise_p pc "IMPOSSIBLE: Ret op in non-return configuration"
       end
-        
+
   | Term TERM_Ret_void =>
     match k with
     | [] => halt DVALUE_None
     | (KRet_void e' p')::k' => cont (g, p', e', k')
     | _ => raise_p pc "IMPOSSIBLE: Ret void in non-return configuration"
     end
-      
+
   | Term (TERM_Br (t,op) br1 br2) =>
-    'dv <- eval_exp (Some (eval_typ t)) op; 
-    'br <- match dv with 
+    'dv <- eval_exp (Some (eval_typ t)) op;
+    'br <- match dv with
             | DVALUE_I1 comparison_bit =>
               if eq comparison_bit one then
                 mret br1
@@ -468,38 +468,38 @@ Definition step (s:state) : Trace result :=
             | _ => failwith "Br got non-bool value"
             end;
     jump (fn pc) (bk pc) br g e k
-             
+
   | Term (TERM_Br_1 br) =>
     jump (fn pc) (bk pc) br g e k
 
-             
-  (* Currently unhandled LLVM terminators *)                                  
+
+  (* Currently unhandled LLVM terminators *)
   | Term (TERM_Switch _ _ _)
   | Term (TERM_IndirectBr _ _)
   | Term (TERM_Resume _)
-  | Term (TERM_Invoke _ _ _ _) => raise_p pc "Unsupport LLVM terminator" 
+  | Term (TERM_Invoke _ _ _ _) => raise_p pc "Unsupport LLVM terminator"
 
   | Inst insn =>  (* instruction *)
     do pc_next <- trywith "no fallthrough instruction" (incr_pc CFG pc);
     match (pt pc), insn  with
 
       | IId id, INSTR_Op op =>
-         'dv <- eval_op g e op;     
+         'dv <- eval_op g e op;
           cont (g, pc_next, add_env id dv e, k)
-          
+
       | IId id, INSTR_Alloca t _ _ =>
         Vis (Alloca (eval_typ t)) (fun (a:dvalue) =>  cont (g, pc_next, add_env id a e, k))
-                
+
       | IId id, INSTR_Load _ t (u,ptr) _ =>
         'dv <- eval_exp (Some (eval_typ u)) ptr;
           Vis (Load (eval_typ t) dv) (fun dv => cont (g, pc_next, add_env id dv e, k))
-            
-      | IVoid _, INSTR_Store _ (t, val) (u, ptr) _ => 
-        'dv <- eval_exp (Some (eval_typ t)) val; 
+
+      | IVoid _, INSTR_Store _ (t, val) (u, ptr) _ =>
+        'dv <- eval_exp (Some (eval_typ t)) val;
         'v <- eval_exp (Some (eval_typ u)) ptr;
           Vis (Store v dv) (fun _ => cont (g, pc_next, e, k))
 
-      | _, INSTR_Store _ _ _ _ => raise "ERROR: Store to non-void ID" 
+      | _, INSTR_Store _ _ _ _ => raise "ERROR: Store to non-void ID"
 
       | pt, INSTR_Call (t, f) args =>
         'fv <- eval_exp None f;
@@ -515,7 +515,7 @@ Definition step (s:state) : Trace result :=
               let env := env_of_assoc bs in
               match pt with
               | IVoid _ => cont (g, pc_f, env, (KRet_void e pc_next::k))
-              | IId id =>  cont (g, pc_f, env, (KRet e id pc_next::k))          
+              | IId id =>  cont (g, pc_f, env, (KRet e id pc_next::k))
               end
           | None => (* This must have been a registered external function *)
             match fid with
@@ -527,16 +527,16 @@ Definition step (s:state) : Trace result :=
         | _ => raise_p pc "call got non-function pointer"
         end
 
-      | _, INSTR_Unreachable => raise_p pc "IMPOSSIBLE: unreachable in reachable position" 
+      | _, INSTR_Unreachable => raise_p pc "IMPOSSIBLE: unreachable in reachable position"
 
         (* Currently unhandled LLVM instructions *)
-      | _, INSTR_Fence 
-      | _, INSTR_AtomicCmpXchg 
+      | _, INSTR_Fence
+      | _, INSTR_AtomicCmpXchg
       | _, INSTR_AtomicRMW
-      | _, INSTR_VAArg 
+      | _, INSTR_VAArg
       | _, INSTR_LandingPad => raise_p pc "Unsupported LLVM instruction"
 
-      (* Error states *)                                     
+      (* Error states *)
       | _, _ => raise_p pc "ID / Instr mismatch void/non-void"
       end
   end.
@@ -557,7 +557,7 @@ Definition register_functions (g:genv) : Trace genv :=
   monad_fold_right register_declaration
                    ((m_declarations CFG) ++ (List.map df_prototype (m_definitions CFG)))
                    g.
-  
+
 Definition initialize_globals (gs:list global) (g:genv) : Trace unit :=
   monad_fold_right
     (fun (_:unit) (glb:global) =>
@@ -570,7 +570,7 @@ Definition initialize_globals (gs:list global) (g:genv) : Trace unit :=
            end;
        Vis (Store a dv) mret)
     gs tt.
-  
+
 Definition build_global_environment : Trace genv :=
   'g <- allocate_globals (m_globals CFG);
   'g2 <- register_functions g;
